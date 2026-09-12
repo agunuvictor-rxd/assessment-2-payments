@@ -1,25 +1,14 @@
-# LinkedIn Post — Assessment 2: Payment and Subscription Slice
+# LinkedIn Post — Metis Bootcamp Assessment 2: Payment & Subscription Slice
 
-**Why you should never store prices as floating-point numbers (and how we engineered mid-cycle subscription proration)**
+💳 **Metis Academic Co-Pilot — Assessment 2: Idempotent Payments & Subscription State Machine**
 
-If you store $19.99 in your database as `19.99` using a standard JavaScript float or database `FLOAT`, your accounting team will eventually find missing pennies. In IEEE 754 floating-point arithmetic, `0.1 + 0.2` equals `0.30000000000000004`. Over tens of thousands of subscription renewals and proration calculations, these tiny rounding discrepancies compound into reconciliation nightmares.
+Why floating-point math and non-idempotent webhooks will destroy your billing engine.
 
-For the second milestone of our Product Engineering Bootcamp, I built a production-minded Payment and Subscription Slice with Node.js, Express, and SQLite.
+For the second assessment of the **Metis Academic Co-Pilot** platform, I built a production-minded **Payment & Subscription Slice** focused on pay-as-you-go token accounting, subscription state transitions, and strict webhook idempotency.
 
-One foundational rule we enforced from day one: **all money is stored strictly as integers in minor units (cents) alongside the ISO currency code**. A $20.00 monthly subscription is represented in the database as `2000` cents USD.
+### Key Engineering Invariants:
+1. **Idempotency Guard (`stripeRefId` / Event Deduplication)**: Webhook endpoints track processed event IDs (`evt_...`) in a `webhook_events` table. If Stripe re-delivers a payment notification, the server responds `200 OK` without double-crediting student balances.
+2. **Zero Floating-Point Financial Math**: All transaction values and proration calculations are processed as integer minor units (cents). $20.00 is strictly stored as `2000` cents.
+3. **Deterministic Subscription State Machine**: Manages transitions between `active`, `past_due`, and `canceled` states with explicit retry limits and end-of-period access retention.
 
-This made our mid-cycle upgrade proration math airtight. Consider an actual upgrade scenario we tested:
-- A user is on Pro Monthly ($20.00 = 2,000 cents) with a 30-day billing cycle (2,592,000 seconds).
-- On day 12, they decide to upgrade to Pro Yearly ($200.00 = 20,000 cents).
-- 18 days remain in their current cycle.
-- Unused credit is calculated to the second: `(18 / 30) * 2000 = 1200 cents` ($12.00).
-- The net charge for the upgrade is computed directly: `20000 - 1200 = 18800 cents` ($188.00).
-
-Because every step of the calculation uses whole minor units, there is zero floating-point drift.
-
-We combined this with cryptographic HMAC-SHA256 webhook verification using constant-time comparison (`crypto.timingSafeEqual`) and database-enforced webhook idempotency. If the payment gateway sends the same payment completion event twice due to network retries, our system recognizes the existing `provider_event_id` in our multi-stage `payment_logs` table and avoids extending the user's billing period twice.
-
-Check out the complete implementation, database schemas, and reproducible test evidence:
-https://github.com/developer/assessment-2-payments
-
-#SoftwareEngineering #Fintech #NodeJS #WebDevelopment #DatabaseDesign #PaymentArchitecture
+#SoftwareEngineering #FinTech #NodeJS #Metis #Webhooks #Idempotency #BackendDevelopment #DatabaseDesign
