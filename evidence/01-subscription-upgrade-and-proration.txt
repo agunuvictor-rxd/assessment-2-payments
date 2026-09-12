@@ -1,0 +1,33 @@
+=== 1. SUBSCRIPTION BEFORE UPGRADE ===
+Subscription ID:      c1b3a00f-b1e0-484a-93a4-19f4438a108c
+User ID:              user_evidence_1
+Plan:                 pro
+Interval:             monthly
+Status:               active
+Period Start:         1788173721 (2026-08-31T10:55:21.000Z)
+Period End:           1790765721 (2026-09-30T10:55:21.000Z)
+
+=== 8. REAL PRORATION ARITHMETIC (Day 12 of 30-Day Cycle) ===
+Original Plan:        Pro Monthly ($20.00 / 2,000 cents)
+New Plan:             Pro Yearly ($200.00 / 20,000 cents)
+Total Days in Cycle:  30 days (2,592,000 seconds)
+Days Used:            12 days
+Days Remaining:       18 days
+Unused Credit:        $12.00 (1200 cents)
+New Plan Cost:        $200.00 (20000 cents)
+Net Amount Charged:   $188.00 (18800 cents)
+Formula:              Net Charge = New Plan Cost (20000) - Unused Credit (1200) = 18800 cents
+
+=== 2. SUBSCRIPTION AFTER UPGRADE ===
+Subscription ID:      c1b3a00f-b1e0-484a-93a4-19f4438a108c
+User ID:              user_evidence_1
+Plan:                 pro
+Interval:             yearly
+Status:               active
+Period Start:         1789210521 (2026-09-12T10:55:21.000Z)
+Period End:           1820746521 (2027-09-12T10:55:21.000Z)
+
+=== 3 & 4. VERIFICATION OF CHANGED INTERVAL & PERIOD END ===
+Interval Changed:     "monthly" -> "yearly" [CHANGED]
+Period End Changed:   1790765721 -> 1820746521 [EXTENDED BY 365 DAYS]
+Difference (Days):    347 days

@@ -1,0 +1,42 @@
+=== COMPLETE TRANSACTION PAYMENT LOGS (Separate Stages, Timestamps, References) ===
+
+[Stage 1: FULFILMENT]
+Log ID:            0e271fb3-58ee-42d3-8f8b-6ba843341bc5
+Provider Event ID: evt_upgrade_midcycle_test
+Amount:            $188.00 (18800 USD minor units)
+Status:            succeeded
+Timestamp:         1789210521 (2026-09-12T10:55:21.000Z)
+Metadata:          {"planId":"pro","interval":"yearly","currentPeriodEnd":1820746521}
+--------------------------------------------------------------------------------
+[Stage 2: VERIFICATION]
+Log ID:            11bd056b-d8a7-4061-90c3-aa681fb42a1e
+Provider Event ID: evt_upgrade_midcycle_test
+Amount:            $188.00 (18800 USD minor units)
+Status:            succeeded
+Timestamp:         1789210521 (2026-09-12T10:55:21.000Z)
+Metadata:          {"checkoutSessionId":"cs_test_15a0538a2bfb1ae2fb256b423ff6520b"}
+--------------------------------------------------------------------------------
+[Stage 3: INITIATION]
+Log ID:            ac979469-e66d-4994-baa3-58cf6622dbcd
+Provider Event ID: evt_init_cs_test_15a0538a2bfb1ae2fb256b423ff6520b
+Amount:            $188.00 (18800 USD minor units)
+Status:            pending
+Timestamp:         1789210521 (2026-09-12T10:55:21.000Z)
+Metadata:          {"planId":"pro","interval":"yearly","checkoutSessionId":"cs_test_15a0538a2bfb1ae2fb256b423ff6520b","proration":{"daysInCycle":30,"daysUsed":12,"daysRemaining":18,"unusedCreditCents":1200,"newPlanCostCents":20000,"amountChargedCents":18800,"arithmeticSummary":{"originalPlanCostCents":2000,"unusedCreditCents":1200,"newPlanCostCents":20000,"netChargeCents":18800,"formula":"Net Charge = New Plan Cost (20000) - Unused Credit (1200) = 18800 cents"}}}
+--------------------------------------------------------------------------------
+[Stage 4: INITIATION]
+Log ID:            b44a210c-178e-4c45-86d3-30309e331569
+Provider Event ID: evt_init_cs_test_7cccbb072d1e2e3714a35030834e16cb
+Amount:            $20.00 (2000 USD minor units)
+Status:            pending
+Timestamp:         1789210521 (2026-09-12T10:55:21.000Z)
+Metadata:          {"planId":"pro","interval":"monthly","checkoutSessionId":"cs_test_7cccbb072d1e2e3714a35030834e16cb","proration":null}
+--------------------------------------------------------------------------------
+[Stage 5: FAILURE]
+Log ID:            0fb495cc-2b18-4f7c-a15d-4412ccc99f2b
+Provider Event ID: evt_fail_cs_test_7cccbb072d1e2e3714a35030834e16cb
+Amount:            $20.00 (2000 USD minor units)
+Status:            failed
+Timestamp:         1789210522 (2026-09-12T10:55:22.000Z)
+Metadata:          {"reason":"Payment not completed or declined by provider"}
+--------------------------------------------------------------------------------

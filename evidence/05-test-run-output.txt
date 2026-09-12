@@ -1,0 +1,17 @@
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+✔ Money Invariant: all pricing and database amounts are integers in minor units (cents) (5.2726ms)
+✔ Proration Arithmetic: accurately calculates mid-cycle upgrade credit and net charge (1.3855ms)
+✔ Server-Side Verification: rejects unverified checkout session without payment completion (6.886ms)
+✔ Webhook Idempotency: duplicate webhooks do not apply effects or extend period twice (4.5076ms)
+✔ Webhook Signature: rejects invalid signatures and accepts valid HMAC signatures (4.4187ms)
+✔ Cancellation & Downgrade: retain access until paid period ends and store reason (4.6928ms)
+✔ Payment Logs: records all 4 discrete stages (Initiation, Verification, Fulfilment, Failure) (4.4399ms)
+✔ Rate Limiter: checkout initiation is rate-limited upon quota breach (460.1051ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1092.6715

@@ -1,0 +1,10 @@
+=== 11 & 12. CANCELLED SUBSCRIPTION & RETAINED ACCESS EVIDENCE ===
+Subscription ID:          c1b3a00f-b1e0-484a-93a4-19f4438a108c
+Current Plan:             pro
+Status:                   active (Access remains Pro)
+Cancel at Period End:     1 (1 = TRUE)
+Cancellation Reason:      "Migrating billing to external enterprise procurement"
+Current Period End:       1820746522 (2027-09-12T10:55:22.000Z)
+Current Time:             1789210521 (2026-09-12T10:55:21.000Z)
+Access Retained:          YES. User retains Pro access because current time < period end.
+Immediate Revocation:     NO. Status is not deactivated; cancel_at_period_end flag preserves access until term expiry.

@@ -1,0 +1,49 @@
+=== 9 & 10. WEBHOOK IDEMPOTENCY EVIDENCE (Same Webhook Fired Twice) ===
+Idempotency Key / Provider Event ID: evt_webhook_idempotency_run_999
+
+--- FIRST WEBHOOK ARRIVAL ---
+Result Status:      Succeeded (duplicate: false)
+Entitlement Applied: YES
+Period End Set To:  1820746522 (2027-09-12T10:55:22.000Z)
+
+--- SECOND WEBHOOK ARRIVAL (DUPLICATE) ---
+Result Status:      Duplicate Recognized (duplicate: true)
+Entitlement Applied: NO (Effect prevented from applying twice)
+Period End Date:    1820746522 (2027-09-12T10:55:22.000Z)
+Period End Changed: NO (INVARIANT PRESERVED)
+
+--- DATABASE PAYMENT LOG RECORDS FOR THIS EVENT ---
+[
+  {
+    "stage": "verification",
+    "amount_cents": 20000,
+    "status": "succeeded",
+    "provider_event_id": "evt_webhook_idempotency_run_999",
+    "metadata": "{\"checkoutSessionId\":\"cs_test_7864c2952341cb97c505c6cb8056527e\"}",
+    "created_at": 1789210522
+  },
+  {
+    "stage": "fulfilment",
+    "amount_cents": 20000,
+    "status": "succeeded",
+    "provider_event_id": "evt_webhook_idempotency_run_999",
+    "metadata": "{\"planId\":\"pro\",\"interval\":\"yearly\",\"currentPeriodEnd\":1820746522}",
+    "created_at": 1789210522
+  },
+  {
+    "stage": "verification",
+    "amount_cents": 20000,
+    "status": "succeeded",
+    "provider_event_id": "evt_webhook_idempotency_run_999",
+    "metadata": "{\"checkoutSessionId\":\"cs_test_7864c2952341cb97c505c6cb8056527e\"}",
+    "created_at": 1789210522
+  },
+  {
+    "stage": "fulfilment",
+    "amount_cents": 20000,
+    "status": "duplicate",
+    "provider_event_id": "evt_webhook_idempotency_run_999",
+    "metadata": "{\"message\":\"Recognized duplicate webhook/event; effect was not reapplied.\"}",
+    "created_at": 1789210522
+  }
+]
