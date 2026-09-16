@@ -133,10 +133,14 @@ export function initiateCheckout({ userId, planId, interval }, db = getDatabase(
  * Server-side payment verification and idempotent fulfilment.
  * Never grants entitlement without server verification.
  */
-export function verifyAndFulfillPayment({ checkoutSessionId, providerEventId }, db = getDatabase()) {
+export function verifyAndFulfillPayment({ checkoutSessionId, providerEventId, userId }, db = getDatabase()) {
   const session = getProviderCheckoutSession(checkoutSessionId);
   if (!session) {
     throw new Error('Invalid or non-existent checkout session');
+  }
+
+  if (userId && session.userId !== userId) {
+    throw new Error('Unauthorized: checkout session does not belong to the authenticated user.');
   }
 
   // Server-side verification check
@@ -168,40 +172,42 @@ export function verifyAndFulfillPayment({ checkoutSessionId, providerEventId }, 
     metadata: { checkoutSessionId: session.id },
   }, db);
 
-  // Webhook & event Idempotency Check:
-  // Check if a fulfilment record already exists for this providerEventId
-  const existingFulfilment = db.prepare(`
-    SELECT id FROM payment_logs
-    WHERE provider_event_id = ? AND stage = 'fulfilment' AND status = 'succeeded'
-  `).get(effectiveEventId);
-
-  if (existingFulfilment) {
-    // Record duplicate event without reapplying effects
-    recordPaymentLog({
-      userId: session.userId,
-      subscriptionId: currentSub.id,
-      providerEventId: effectiveEventId,
-      stage: 'fulfilment',
-      amountCents: session.amountCents,
-      currency: session.currency,
-      status: 'duplicate',
-      metadata: { message: 'Recognized duplicate webhook/event; effect was not reapplied.' },
-    }, db);
-
-    return {
-      success: true,
-      duplicate: true,
-      subscription: currentSub,
-    };
-  }
-
-  // Stage 3: Fulfilment - Update Subscription State in DB
-  const now = Math.floor(Date.now() / 1000);
-  const periodDurationSeconds = session.interval === 'yearly' ? 365 * 86400 : 30 * 86400;
-  const periodEnd = now + periodDurationSeconds;
-
+  // Webhook & event Idempotency Check is performed INSIDE the write transaction.
+  // BEGIN IMMEDIATE serializes writers; a concurrent duplicate (multi-instance)
+  // blocks here and sees the first writer's fulfilment record.
   db.exec('BEGIN IMMEDIATE;');
   try {
+    const existingFulfilment = db.prepare(`
+      SELECT id FROM payment_logs
+      WHERE provider_event_id = ? AND stage = 'fulfilment' AND status = 'succeeded'
+    `).get(effectiveEventId);
+
+    if (existingFulfilment) {
+      // Record duplicate event without reapplying effects
+      recordPaymentLog({
+        userId: session.userId,
+        subscriptionId: currentSub.id,
+        providerEventId: effectiveEventId,
+        stage: 'fulfilment',
+        amountCents: session.amountCents,
+        currency: session.currency,
+        status: 'duplicate',
+        metadata: { message: 'Recognized duplicate webhook/event; effect was not reapplied.' },
+      }, db);
+
+      db.exec('COMMIT;');
+      return {
+        success: true,
+        duplicate: true,
+        subscription: currentSub,
+      };
+    }
+
+    // Stage 3: Fulfilment - Update Subscription State in DB
+    const now = Math.floor(Date.now() / 1000);
+    const periodDurationSeconds = session.interval === 'yearly' ? 365 * 86400 : 30 * 86400;
+    const periodEnd = now + periodDurationSeconds;
+
     db.prepare(`
       UPDATE subscriptions
       SET plan_id = ?,

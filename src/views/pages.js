@@ -1,4 +1,5 @@
 import { renderLayout } from './layout.js';
+import { escapeHtml, embedScriptJson, formatMoney } from './utils.js';
 
 export function plansView({ user, subscription }) {
   const isFree = subscription.plan_id === 'free';
@@ -119,7 +120,7 @@ export function plansView({ user, subscription }) {
 }
 
 export function checkoutView({ user, session, proration }) {
-  const amountFormatted = (session.amountCents / 100).toFixed(2);
+  const amountFormatted = formatMoney(session.amountCents);
 
   const content = `
     <div class="card" style="max-width: 540px; margin: 2rem auto;">
@@ -133,11 +134,11 @@ export function checkoutView({ user, session, proration }) {
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
           <span style="color: var(--text-muted);">Minor Units:</span>
-          <code>${session.amountCents} ${session.currency} cents</code>
+          <code>${session.amountCents} ${escapeHtml(session.currency)} cents</code>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
           <span style="color: var(--text-muted);">Session ID:</span>
-          <code style="font-size: 0.8rem;">${session.id}</code>
+          <code style="font-size: 0.8rem;">${escapeHtml(session.id)}</code>
         </div>
 
         ${proration ? `
@@ -145,7 +146,7 @@ export function checkoutView({ user, session, proration }) {
             <p style="color: var(--primary); font-weight: 700; margin-bottom: 0.5rem;">Mid-Cycle Upgrade Proration Applied</p>
             <div style="display:flex; justify-content:space-between; margin-bottom: 0.25rem;">
               <span>New Plan Cost:</span>
-              <span>$${(proration.newPlanCostCents / 100).toFixed(2)} (${proration.newPlanCostCents}¢)</span>
+              <span>$${formatMoney(proration.newPlanCostCents)} (${proration.newPlanCostCents}¢)</span>
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom: 0.25rem;">
               <span>Days Remaining in Cycle:</span>
@@ -153,7 +154,7 @@ export function checkoutView({ user, session, proration }) {
             </div>
             <div style="display:flex; justify-content:space-between; margin-bottom: 0.25rem; color: var(--success);">
               <span>Unused Credit Deducted:</span>
-              <span>-$${(proration.unusedCreditCents / 100).toFixed(2)} (${proration.unusedCreditCents}¢)</span>
+              <span>-$${formatMoney(proration.unusedCreditCents)} (${proration.unusedCreditCents}¢)</span>
             </div>
           </div>
         ` : ''}
@@ -186,7 +187,7 @@ export function checkoutView({ user, session, proration }) {
           const simRes = await fetch('/api/payments/simulate-success', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId: '${session.id}' }),
+            body: JSON.stringify({ sessionId: ${embedScriptJson(session.id)} }),
           });
 
           if (!simRes.ok) {
@@ -239,7 +240,7 @@ export function paymentReturnView({ user, sessionId }) {
           const res = await fetch('/api/payments/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionId: '${sessionId}' }),
+            body: JSON.stringify({ sessionId: ${embedScriptJson(sessionId)} }),
           });
 
           const data = await res.json();
@@ -373,7 +374,7 @@ export function billingView({ user, subscription, paymentLogs }) {
                     ${escapeHtml(log.stage)}
                   </td>
                   <td style="padding: 0.75rem 0.5rem;">
-                    $${(log.amount_cents / 100).toFixed(2)} ${escapeHtml(log.currency)}
+                    $${formatMoney(log.amount_cents)} ${escapeHtml(log.currency)}
                   </td>
                   <td style="padding: 0.75rem 0.5rem;">
                     <span class="badge ${log.status === 'succeeded' ? 'badge-active' : log.status === 'duplicate' ? 'badge-free' : 'badge-canceled'}">
@@ -544,13 +545,4 @@ export function signupView() {
   `;
 
   return renderLayout({ title: 'Sign Up', content, scripts });
-}
-
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }

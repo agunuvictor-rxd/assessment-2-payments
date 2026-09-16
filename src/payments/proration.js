@@ -22,9 +22,10 @@ export function calculateProration({
   const daysUsed = Math.floor(secondsUsed / 86400);
   const daysRemaining = Math.ceil(secondsRemaining / 86400);
 
-  // Exact second-precision unused credit rounded to nearest integer cent
-  const unusedFraction = secondsRemaining / totalCycleSeconds;
-  const unusedCreditCents = Math.round(currentAmountCents * unusedFraction);
+  // Exact integer minor-unit unused credit.
+  // Integer math avoids floating-point drift and always floors to favor the merchant,
+  // consistent with the documented arithmetic (e.g. Math.floor(15 * (2000 / 30)) = 1000).
+  const unusedCreditCents = Math.floor((currentAmountCents * secondsRemaining) / totalCycleSeconds);
 
   const amountChargedCents = Math.max(0, newAmountCents - unusedCreditCents);
 

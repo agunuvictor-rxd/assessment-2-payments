@@ -14,6 +14,14 @@ import {
   getProviderCheckoutSession,
 } from '../payments/provider.js';
 import { getDatabase } from '../db.js';
+import {
+  checkoutSchema,
+  simulateSuccessSchema,
+  verifySchema,
+  cancelSchema,
+  webhookSchema,
+  formatZodError,
+} from '../validation.js';
 
 export const paymentsRouter = Router();
 
@@ -22,10 +30,11 @@ export const paymentsRouter = Router();
  * Rate-limited server-side initiation with proration calculation.
  */
 paymentsRouter.post('/checkout', requireAuth, checkoutLimiter, (req, res) => {
-  const { planId, interval } = req.body;
-  if (!planId || !interval) {
-    return res.status(400).json({ success: false, error: 'planId and interval are required.' });
+  const parsed = checkoutSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: formatZodError(parsed.error) });
   }
+  const { planId, interval } = parsed.data;
 
   try {
     const result = initiateCheckout({
@@ -52,12 +61,17 @@ paymentsRouter.post('/checkout', requireAuth, checkoutLimiter, (req, res) => {
  * Advances provider checkout session status to 'paid'.
  */
 paymentsRouter.post('/simulate-success', requireAuth, (req, res) => {
-  const { sessionId } = req.body;
+  const parsed = simulateSuccessSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: formatZodError(parsed.error) });
+  }
+  const { sessionId } = parsed.data;
   try {
-    const session = simulateProviderPaymentSuccess(sessionId);
+    const session = simulateProviderPaymentSuccess(sessionId, { userId: req.user.id });
     return res.status(200).json({ success: true, session });
   } catch (err) {
-    return res.status(400).json({ success: false, error: err.message });
+    const status = err.message.startsWith('Unauthorized') ? 403 : 400;
+    return res.status(status).json({ success: false, error: err.message });
   }
 });
 
@@ -67,20 +81,25 @@ paymentsRouter.post('/simulate-success', requireAuth, (req, res) => {
  * Verifies with provider server-side before updating subscription table.
  */
 paymentsRouter.post('/verify', requireAuth, (req, res) => {
-  const { sessionId } = req.body;
-  if (!sessionId) {
-    return res.status(400).json({ success: false, error: 'sessionId is required.' });
+  const parsed = verifySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: formatZodError(parsed.error) });
   }
+  const { sessionId } = parsed.data;
 
   try {
-    const result = verifyAndFulfillPayment({ checkoutSessionId: sessionId });
+    const result = verifyAndFulfillPayment({
+      checkoutSessionId: sessionId,
+      userId: req.user.id,
+    });
     return res.status(200).json({
       success: true,
       duplicate: result.duplicate,
       subscription: result.subscription,
     });
   } catch (err) {
-    return res.status(400).json({ success: false, error: err.message });
+    const status = err.message.startsWith('Unauthorized') ? 403 : 400;
+    return res.status(status).json({ success: false, error: err.message });
   }
 });
 
@@ -104,6 +123,12 @@ paymentsRouter.post('/webhook', (req, res) => {
   const { eventType, providerEventId, checkoutSessionId } = payload;
 
   if (eventType === 'checkout.session.completed') {
+    const parsed = webhookSchema.safeParse(payload);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: formatZodError(parsed.error) });
+    }
+    const { providerEventId, checkoutSessionId } = parsed.data;
+
     try {
       const result = verifyAndFulfillPayment({ checkoutSessionId, providerEventId });
       return res.status(200).json({
@@ -140,7 +165,11 @@ paymentsRouter.post('/downgrade', requireAuth, (req, res) => {
  * Retains current access until end of current billing period. Stores cancellation reason.
  */
 paymentsRouter.post('/cancel', requireAuth, (req, res) => {
-  const { reason } = req.body;
+  const parsed = cancelSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: formatZodError(parsed.error) });
+  }
+  const { reason = null } = parsed.data;
   try {
     const sub = cancelSubscription({ userId: req.user.id, reason });
     return res.status(200).json({

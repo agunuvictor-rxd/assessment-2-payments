@@ -4,14 +4,16 @@ import { getDatabase } from '../db.js';
 import { hashPassword, verifyPassword } from '../auth/hash.js';
 import { createSession, destroySession, COOKIE_NAME, getCookieOptions } from '../auth/session.js';
 import { getOrCreateSubscription } from '../payments/service.js';
+import { signupSchema, signinSchema, formatZodError } from '../validation.js';
 
 export const authRouter = Router();
 
 authRouter.post('/signup', async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) {
-    return res.status(400).json({ success: false, error: 'Name, email, and password are required.' });
+  const parsed = signupSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: formatZodError(parsed.error) });
   }
+  const { name, email, password } = parsed.data;
 
   const db = getDatabase();
   const userId = crypto.randomUUID();
@@ -40,7 +42,11 @@ authRouter.post('/signup', async (req, res) => {
 });
 
 authRouter.post('/signin', async (req, res) => {
-  const { email, password } = req.body;
+  const parsed = signinSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: formatZodError(parsed.error) });
+  }
+  const { email, password } = parsed.data;
   const db = getDatabase();
 
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email?.toLowerCase().trim());

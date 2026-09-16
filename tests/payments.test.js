@@ -67,6 +67,62 @@ test('Proration Arithmetic: accurately calculates mid-cycle upgrade credit and n
   // Net charge: 20000 - 1200 = 18800 cents ($188.00)
   assert.equal(proration.amountChargedCents, 18800, 'Net amount charged must be 18800 cents ($188.00)');
   assert.equal(Number.isInteger(proration.amountChargedCents), true);
+
+  // Floor behavior with fractional credit: 5 days used (25 remaining) -> floor(2000*25/30) = 1666, never 1666.67 or 1667
+  const periodStartFractional = now - (5 * 86400);
+  const fractional = calculateProration({
+    currentAmountCents: 2000,
+    periodStart: periodStartFractional,
+    periodEnd: periodStartFractional + (30 * 86400),
+    effectiveAt: now,
+    newAmountCents: 20000,
+  });
+  assert.equal(fractional.unusedCreditCents, 1666, 'Unused credit must floor fractional cents to the merchant\u0027s favor');
+  assert.equal(fractional.amountChargedCents, 18334, 'Net charge uses floored credit: 20000 - 1666 = 18334 cents');
+});
+
+test('Ownership: verify and simulate reject another user\u0027s checkout session', () => {
+  const db = getDatabase(':memory:');
+  const now = Math.floor(Date.now() / 1000);
+
+  const insertUser = db.prepare(`
+    INSERT INTO users (id, name, email, password_hash, created_at)
+    VALUES (?, ?, ?, 'hash', ?)
+  `);
+  insertUser.run('owner', 'Owner', 'owner@example.com', now);
+  insertUser.run('attacker', 'Attacker', 'attacker@example.com', now);
+
+  const checkout = initiateCheckout({ userId: 'owner', planId: 'pro', interval: 'monthly' }, db);
+  simulateProviderPaymentSuccess(checkout.sessionId);
+
+  // Another user must not be able to verify someone else's session
+  assert.throws(
+    () => {
+      verifyAndFulfillPayment({
+        checkoutSessionId: checkout.sessionId,
+        userId: 'attacker',
+      }, db);
+    },
+    (err) => err.message.includes('Unauthorized'),
+    'Cross-user verification must be rejected'
+  );
+
+  // Another user must not be able to simulate payment success on someone else's session
+  assert.throws(
+    () => {
+      simulateProviderPaymentSuccess(checkout.sessionId, { userId: 'attacker' });
+    },
+    (err) => err.message.includes('Unauthorized'),
+    'Cross-user simulate-success must be rejected'
+  );
+
+  // The rightful owner can still complete the flow
+  const result = verifyAndFulfillPayment({
+    checkoutSessionId: checkout.sessionId,
+    userId: 'owner',
+  }, db);
+  assert.equal(result.success, true);
+  assert.equal(result.duplicate, false);
 });
 
 test('Server-Side Verification: rejects unverified checkout session without payment completion', () => {

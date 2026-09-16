@@ -33,9 +33,13 @@ export function getProviderCheckoutSession(sessionId) {
 /**
  * Simulates cardholder completing checkout on provider's hosted page.
  */
-export function simulateProviderPaymentSuccess(sessionId) {
+export function simulateProviderPaymentSuccess(sessionId, { userId } = {}) {
   const session = checkoutSessions.get(sessionId);
   if (!session) throw new Error('Checkout session not found');
+
+  if (userId && session.userId !== userId) {
+    throw new Error('Unauthorized: checkout session does not belong to the authenticated user.');
+  }
 
   session.status = 'complete';
   session.paymentStatus = 'paid';

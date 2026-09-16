@@ -1,10 +1,12 @@
+import { escapeHtml } from './utils.js';
+
 export function renderLayout({ title, user = null, content, scripts = '' }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} | Payments Slice</title>
+  <title>${escapeHtml(title)} | Payments Slice</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -130,13 +132,4 @@ export function renderLayout({ title, user = null, content, scripts = '' }) {
   ${scripts}
 </body>
 </html>`;
-}
-
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
 }

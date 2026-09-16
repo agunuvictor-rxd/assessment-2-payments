@@ -4,12 +4,12 @@ Idempotency Key / Provider Event ID: evt_webhook_idempotency_run_999
 --- FIRST WEBHOOK ARRIVAL ---
 Result Status:      Succeeded (duplicate: false)
 Entitlement Applied: YES
-Period End Set To:  1820746522 (2027-09-12T10:55:22.000Z)
+Period End Set To:  1821097437 (2027-09-16T12:23:57.000Z)
 
 --- SECOND WEBHOOK ARRIVAL (DUPLICATE) ---
 Result Status:      Duplicate Recognized (duplicate: true)
 Entitlement Applied: NO (Effect prevented from applying twice)
-Period End Date:    1820746522 (2027-09-12T10:55:22.000Z)
+Period End Date:    1821097437 (2027-09-16T12:23:57.000Z)
 Period End Changed: NO (INVARIANT PRESERVED)
 
 --- DATABASE PAYMENT LOG RECORDS FOR THIS EVENT ---
@@ -19,24 +19,24 @@ Period End Changed: NO (INVARIANT PRESERVED)
     "amount_cents": 20000,
     "status": "succeeded",
     "provider_event_id": "evt_webhook_idempotency_run_999",
-    "metadata": "{\"checkoutSessionId\":\"cs_test_7864c2952341cb97c505c6cb8056527e\"}",
-    "created_at": 1789210522
+    "metadata": "{\"checkoutSessionId\":\"cs_test_8746e7e147bb1c3a486f8561341e22aa\"}",
+    "created_at": 1789561437
   },
   {
     "stage": "fulfilment",
     "amount_cents": 20000,
     "status": "succeeded",
     "provider_event_id": "evt_webhook_idempotency_run_999",
-    "metadata": "{\"planId\":\"pro\",\"interval\":\"yearly\",\"currentPeriodEnd\":1820746522}",
-    "created_at": 1789210522
+    "metadata": "{\"planId\":\"pro\",\"interval\":\"yearly\",\"currentPeriodEnd\":1821097437}",
+    "created_at": 1789561437
   },
   {
     "stage": "verification",
     "amount_cents": 20000,
     "status": "succeeded",
     "provider_event_id": "evt_webhook_idempotency_run_999",
-    "metadata": "{\"checkoutSessionId\":\"cs_test_7864c2952341cb97c505c6cb8056527e\"}",
-    "created_at": 1789210522
+    "metadata": "{\"checkoutSessionId\":\"cs_test_8746e7e147bb1c3a486f8561341e22aa\"}",
+    "created_at": 1789561437
   },
   {
     "stage": "fulfilment",
@@ -44,6 +44,6 @@ Period End Changed: NO (INVARIANT PRESERVED)
     "status": "duplicate",
     "provider_event_id": "evt_webhook_idempotency_run_999",
     "metadata": "{\"message\":\"Recognized duplicate webhook/event; effect was not reapplied.\"}",
-    "created_at": 1789210522
+    "created_at": 1789561437
   }
 ]

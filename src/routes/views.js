@@ -66,6 +66,10 @@ viewsRouter.get('/checkout', requireAuth, (req, res) => {
     return res.status(404).send('Checkout session expired or not found.');
   }
 
+  if (session.userId !== req.user.id) {
+    return res.status(404).send('Checkout session not found.');
+  }
+
   // Retrieve proration if stored in initiation payment log
   const db = getDatabase();
   const initLog = db.prepare(`
